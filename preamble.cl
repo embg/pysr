@@ -149,10 +149,10 @@ void fit(short* deapTrees,
 
       slice* left = (slice*)malloc(sizeof(slice));
       slice* right = (slice*)malloc(sizeof(slice));
-
+      
       left->start = start+1; left->end = start+rightChildIdx-1;
       right->start = start+rightChildIdx; right->end = end;
-
+      
       pushSlice(sliceS, left); pushSlice(sliceS, right);
     }
   }
