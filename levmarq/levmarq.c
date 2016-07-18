@@ -6,51 +6,25 @@
 void levmarq_init(LMstat *lmstat) {
   lmstat->verbose = 0;
   lmstat->max_it = 10;
-  lmstat->init_lambda = 0.0001;
+  lmstat->init_lambda = 0.001;
   lmstat->up_factor = 10;
   lmstat->down_factor = 10;
   lmstat->target_derr = 1e-12;
 }
 
-double func(double* params, int x_idx, void* fdata_void_ptr){
-  fdata_struct* fdata = (fdata_struct*)fdata_void_ptr;
 
-  double* X = fdata->X;
-  int numVars = fdata->num_x;
-  return (*(fdata->f))(params, &X[x_idx*numVars]);
-}
-
-void grad(double* G, double* params, int x_idx, void* fdata_void_ptr){
-  fdata_struct* fdata = (fdata_struct*)fdata_void_ptr;
-
-  double* X = fdata->X;
-  double(*f)(double* params, double* X) = fdata->f;
-  int numVars = fdata->num_x;
-
-  double* x = &X[x_idx*numVars];
-  double f_x = (*f)(params, x);
-  for (int i=0; i<fdata->num_p; i++){
-    double p_i = params[i];
-    double h = h_multiplier*(p_i+h_multiplier);
-
-    params[i] = p_i+h;
-    double f_x_plus = (*f)(params, x);
-
-    G[i] = (f_x_plus - f_x)/h;
-    params[i] = p_i;
-  }
-}
-
-int levmarq(int npar, double *par, int ny, double *y, double *dysq,
-            double (*func)(double *, int, void *),
-            void (*grad)(double *, double *, int, void *),
+int levmarq(int npar, float *par,
+            int ny, double *y, double *dysq,
+            float(*func)(float *, int, void *),         
+            void(*grad)(double *, float *, int, void *), 
             void *fdata, LMstat *lmstat)
 {
   int x,i,j,it,nit,ill,verbose;
   double lambda,up,down,mult,weight,err,newerr,derr,target_derr;
   double h[npar*npar],ch[npar*npar];
 #define h(x,y) h[x*npar + y]
-  double g[npar],d[npar],delta[npar],newpar[npar];
+  double g[npar],d[npar],delta[npar];
+  float newpar[npar];
 
   verbose = lmstat->verbose;
   nit = lmstat->max_it;
@@ -130,8 +104,9 @@ int levmarq(int npar, double *par, int ny, double *y, double *dysq,
 
 
 /* calculate the error function (chi-squared) */
-double error_func(double *par, int ny, double *y, double *dysq,
-                  double (*func)(double *, int, void *), void *fdata)
+double error_func(float *par,
+                  int ny, double *y, double *dysq,
+                  float(*func)(float *, int, void *), void *fdata)
 {
   int x;
   double res,e=0;

@@ -3,12 +3,13 @@
 
 #ifndef __LEVMARQ__
 #define __LEVMARQ__
-
+//#define float double
+//#define double float
 #define X(r, c) (X[(r)*numVars + (c)])
-#define h_multiplier 9e-8
+#define h_multiplier 3e-4
 typedef struct {
-  double* X;
-  double (*f)(double* params, double* X);
+  float* X;
+  float (*f)(float* params, float* X);
   int num_x;
   int num_p;
 } fdata_struct;
@@ -25,14 +26,11 @@ typedef struct {
 	double final_derr;
 } LMstat;
 
-double func(double* params, int x_idx, void* fdata);
-void grad(double* G, double* params, int x_idx, void* fdata);
-
 void levmarq_init(LMstat *lmstat); //initializes lmstat to default values
 
-double error_func(double *par,
+double error_func(float *par,
                   int ny, double *y, double *dysq,
-                  double(*func)(double *, int, void *), void *fdata);
+                  float(*func)(float *, int, void *), void *fdata);
 
 int ldl_cholesky(int n, double *L, double *A);
 
@@ -47,10 +45,10 @@ int ldl_cholesky(int n, double *L, double *A);
 // fdata   pointer to any additional data required by the function
 // lmstat  pointer to the "status" structure, where minimization parameters
 // are set and the final status is returned.
-int levmarq(int npar, double *par,
+int levmarq(int npar, float *par,
             int ny, double *y, double *dysq,
-            double(*func)(double *, int, void *),         
-            void(*grad)(double *, double *, int, void *), 
+            float(*func)(float *, int, void *),         
+            void(*grad)(double *, float *, int, void *), 
             void *fdata, LMstat *lmstat);
 
 void solve_axb_cholesky(int n, double l[n], double x[n], double b[n]);
