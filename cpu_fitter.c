@@ -56,7 +56,6 @@ float eval(short* individual, int len, float* x, float* params, Stack* S){
         assert(0); //we should never get here!
       }
     }
-    printf("%i %g\n", individual[i], S->array[S->height - 1]);
   }
   return pop(S);
 }
