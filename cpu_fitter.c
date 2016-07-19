@@ -32,7 +32,7 @@ float eval(short* individual, int len, float* x, float* params, Stack* S){
 
   for (int i=0; i<len; i++){
     if (individual[i] >= 0){
-      push(S, x[i]);
+      push(S, x[individual[i]]);
     } else if (individual[i] == CONST_ID){
       push(S, params[param_idx]);
       param_idx++;
@@ -56,6 +56,7 @@ float eval(short* individual, int len, float* x, float* params, Stack* S){
         assert(0); //we should never get here!
       }
     }
+    printf("%i %g\n", individual[i], S->array[S->height - 1]);
   }
   return pop(S);
 }
@@ -121,25 +122,31 @@ void fit(short* individual, int len,
           &lmstat);
 }
 
-  #define numParams 1
+  #define numParams 3
   #define numPoints 1000
   #define numVars 1
-  #define len 3
+  #define len 11
 int main(){
   
-  short individual[len] = {-1, 0, -4};
-
-  float gen_params[numParams] = {1};
-  double y[numPoints]; float X[numPoints];
-  for (int i=0; i<numPoints; i++){
-  X[i] = i;
-  y[i] = gen_params[0]*X[i];
-}
-  float params[numParams] = {10};
-  fit(individual, len, params, numParams, X, numVars, y, numPoints);
-  for(int i=0; i<numParams; i++){
-  printf("%g ", params[i]);
-}
-  printf("\n");
+  //short individual[len] = {-1, 0, -4};
+  short individual[len] = {CONST_ID, CONST_ID, 0, MUL_ID, ADD_ID, CONST_ID, 0, MUL_ID, 0, MUL_ID, ADD_ID};
+  float x[numVars] = {2};
+  float params[numParams] = {1,2,3};
+  Stack S; float stackArray[11];
+  initializeStack(&S, stackArray);
+  printf("%g\n", eval(individual, len, x, params, &S));
   return 0;
+/*   float gen_params[numParams] = {1}; */
+/*   double y[numPoints]; float X[numPoints]; */
+/*   for (int i=0; i<numPoints; i++){ */
+/*   X[i] = i; */
+/*   y[i] = gen_params[0]*X[i]; */
+/* } */
+/*   float params[numParams] = {10}; */
+/*   fit(individual, len, params, numParams, X, numVars, y, numPoints); */
+/*   for(int i=0; i<numParams; i++){ */
+/*   printf("%g ", params[i]); */
+/* } */
+/*   printf("\n"); */
+/*   return 0; */
 }
