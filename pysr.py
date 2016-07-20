@@ -1,3 +1,4 @@
+import copy
 import warnings
 warnings.simplefilter('ignore')
 import scipy
@@ -50,6 +51,8 @@ pset.addPrimitive(lambda x,y: np.nan_to_num(np.divide(x,y)),
                   2, name='div')
 pset.addPrimitive(lambda x,y: np.nan_to_num(np.power(np.abs(x),y)),
                   2, name='pow')
+pset.addPrimitive(lambda x: np.nan_to_num(np.sin(x)),
+                  1, name='sin')
 
 pset.addEphemeralConstant('C',    #95% of the time falls within [-100, 100]
                           lambda: random.gauss(0, 50))
@@ -65,6 +68,7 @@ creator.create('Individual',
 
 #Define our evaluation function
 def optimizeConstants(individual):
+    individual = copy.deepcopy(individual)
     #Optimize the constants
     constants = np.array(list(map(lambda n: n.value,
                               filter(lambda n: isinstance(n, gp.C),individual))))
@@ -171,8 +175,9 @@ def evolve(population, toolbox, popSize, cxpb, mutpb, ngen,
         offspring = varOr(population, toolbox, lambda_, cxpb, mutpb)
 
         #Optimize the new individuals
+        #old = list(map(lambda ind: evaluate(ind)[0], offspring))
         offspring = list(toolbox.map(optimizeConstants, offspring))
-
+        #print([evaluate(ind)[0]/oldVal for ind,oldVal in zip(offspring, old)])
         # Evaluate the individuals with an invalid fitness
         fitnesses = toolbox.map(toolbox.evaluate, offspring)
 
@@ -184,14 +189,13 @@ def evolve(population, toolbox, popSize, cxpb, mutpb, ngen,
             halloffame.update(offspring)
 
         # Select the next generation population
-        population = (toolbox.select(population + offspring, math.floor(.99*mu)) +
-                      tools.selBest(population + offspring, math.floor(.01*mu)))
-
+        population = toolbox.select(population + offspring, mu)
+                     
         # Pickle the state
         if pickleFile is not None:
             cp = dict(population=population, generation=gen, halloffame=halloffame,
                       logbook=logbook, rndstate=random.getstate())
-            with open(pickleFile, "wb") as cp_file:
+            with open(pickleFile+str(gen), "wb") as cp_file:
                 pickle.dump(cp, cp_file)
 
         # Update the statistics with the new population
@@ -253,7 +257,7 @@ def main():
     sympy_namespace['sub'] = lambda a,b: sympy.Add(a, -b)
     sympy_namespace['mul'] = sympy.Mul
     sympy_namespace['div'] = lambda a,b: a*sympy.Pow(b,-1)
-    sympy_namespace['pow'] = lambda a,b: sympy.Pow(Abs(a), b)
+    sympy_namespace['pow'] = lambda a,b: sympy.Pow(sympy.Abs(a), b)
     sympy_namespace['sin'] = sympy.sin
 
     import re
