@@ -226,7 +226,6 @@ def main():
                           halloffame=hof,
                           pickleFile=pickleFile)
 
-    best = min(pop, key=lambda ind: ind.fitness.values[0])
     func = toolbox.lambdify(expr=best)
 
     yy = func(*X)
