@@ -1,3 +1,4 @@
+import copy
 import warnings
 warnings.simplefilter('ignore')
 import scipy
@@ -50,6 +51,8 @@ pset.addPrimitive(lambda x,y: np.nan_to_num(np.divide(x,y)),
                   2, name='div')
 pset.addPrimitive(lambda x,y: np.nan_to_num(np.power(np.abs(x),y)),
                   2, name='pow')
+pset.addPrimitive(lambda x: np.nan_to_num(np.sin(x)),
+                  1, name='sin')
 
 pset.addEphemeralConstant('C',    #95% of the time falls within [-100, 100]
                           lambda: random.gauss(0, 50))
@@ -65,6 +68,7 @@ creator.create('Individual',
 
 #Define our evaluation function
 def optimizeConstants(individual):
+    individual = copy.deepcopy(individual)
     #Optimize the constants
     constants = np.array(list(map(lambda n: n.value,
                               filter(lambda n: isinstance(n, gp.C),individual))))
@@ -82,14 +86,14 @@ def optimizeConstants(individual):
         def evaluate(constants, individual):
             individual = setConstants(individual, constants)
             func = toolbox.lambdify(expr=individual)
-            diff = (func(*X) - y)**2
-            return np.nan_to_num(np.sum(diff))
+            diff = (func(*X) - y)
+            return np.nan_to_num(diff)
 
-        def evaluateNM(constants):
+        def evaluateLM(constants):
             return evaluate(constants, individual)
 
-        res = scipy.optimize.minimize(evaluateNM, constants, method='Nelder-Mead')
-        individual = setConstants(individual, res.x)
+        res = scipy.optimize.leastsq(evaluateLM, constants)
+        individual = setConstants(individual, res[0])
     return individual
     
 def evaluate(individual):
@@ -104,7 +108,7 @@ toolbox.register("individual", tools.initIterate, creator.Individual, toolbox.ex
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 toolbox.register("lambdify", gp.compile, pset=pset)
 toolbox.register("evaluate", evaluate)
-toolbox.register("select", tools.selNSGA2)
+toolbox.register("select", tools.selTournament, tournsize=4)
 toolbox.register("mate", gp.cxOnePoint)
 toolbox.register("expr_mut", gp.genGrow, min_=0, max_=2)
 toolbox.register("mutate", gp.mutUniform, expr=toolbox.expr_mut, pset=pset)
@@ -171,8 +175,9 @@ def evolve(population, toolbox, popSize, cxpb, mutpb, ngen,
         offspring = varOr(population, toolbox, lambda_, cxpb, mutpb)
 
         #Optimize the new individuals
+        #old = list(map(lambda ind: evaluate(ind)[0], offspring))
         offspring = list(toolbox.map(optimizeConstants, offspring))
-        
+        #print([evaluate(ind)[0]/oldVal for ind,oldVal in zip(offspring, old)])
         # Evaluate the individuals with an invalid fitness
         fitnesses = toolbox.map(toolbox.evaluate, offspring)
 
@@ -184,14 +189,13 @@ def evolve(population, toolbox, popSize, cxpb, mutpb, ngen,
             halloffame.update(offspring)
 
         # Select the next generation population
-        population = (toolbox.select(population + offspring, math.floor(.99*mu)) +
-                      tools.selBest(population + offspring, math.floor(.01*mu)))
+        population = toolbox.select(population + offspring, mu)
                      
         # Pickle the state
         if pickleFile is not None:
             cp = dict(population=population, generation=gen, halloffame=halloffame,
                       logbook=logbook, rndstate=random.getstate())
-            with open(pickleFile, "wb") as cp_file:
+            with open(pickleFile+str(gen), "wb") as cp_file:
                 pickle.dump(cp, cp_file)
 
         # Update the statistics with the new population
@@ -253,6 +257,7 @@ def main():
     sympy_namespace['mul'] = sympy.Mul
     sympy_namespace['div'] = lambda a,b: a*sympy.Pow(b,-1)
     sympy_namespace['pow'] = lambda a,b: sympy.Pow(sympy.Abs(a), b)
+    sympy_namespace['sin'] = sympy.sin
 
     import re
     str_best = re.sub(r'ARG(\d)',r'x_\1',str(best))
