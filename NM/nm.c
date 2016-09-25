@@ -149,5 +149,4 @@ void _minimize(double (*func)(double* x, void* args), double* x0, int N, void* a
   }
   copy(&sim(0,0), x0, N);
   free(ind); free(sim); free(y); free(fsim);
-//  printf("Iterations: %i\n", iterations);
 }
