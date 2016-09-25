@@ -2,8 +2,8 @@
 void _minimize(double (*func)(double* x, void* args), double* x0, int N, void* args);
 
 typedef struct arg_struct {
-   PyObject* func;
-   int N;
+  PyObject* func;
+  int N;
 } arg_struct;
 
 double func(double* x, void* args){
@@ -15,6 +15,7 @@ double func(double* x, void* args){
   //Pass x_list into the python objective function
   PyObject* arglist = Py_BuildValue("(O)", x_list);
   PyObject* result = PyObject_CallObject(((arg_struct*)args)->func, arglist);
+  Py_DECREF(x_list);
 
   //Convert result to a double and return
   return PyFloat_AsDouble(result);
@@ -37,13 +38,14 @@ static PyObject* minimize(PyObject* self, PyObject* py_args){
   //Now build a list off of x0 and return it
   PyObject* result_list = PyList_New(N);
   for (int i=0; i<N; i++){ PyList_SetItem(result_list, i, PyFloat_FromDouble(x0[i])); }
+  free(x0);
   return result_list;
-  }
+}
 
 //Initialize the module with the module table and stuff
 static PyMethodDef module_methods[] = {
-   { "minimize", minimize, METH_VARARGS, "Minimize a function." },
-   { NULL, NULL, 0, NULL }
+  { "minimize", minimize, METH_VARARGS, "Minimize a function." },
+  { NULL, NULL, 0, NULL }
 };
 PyMODINIT_FUNC
 initnelder_mead(void){
