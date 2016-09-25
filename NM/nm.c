@@ -1,5 +1,4 @@
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #define sim(x,y) sim[N*(x) + (y)]
 
