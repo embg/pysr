@@ -7,16 +7,18 @@ double* zeros(int x, int y){
   return (double*)calloc(x*y,sizeof(double));
 }
 void copy(double* from, double* to, int len)
-{ for(int i=0; i<len; i++) to[i] = from[i]; }
+{ int i=0; for(i=0; i<len; i++) to[i] = from[i]; }
 void take(double* arr, int* ind, int numRows, int numCols){
+  int i=0;
   double* temp = (double*)malloc(numRows*numCols*sizeof(double));
-  for(int i=0; i<numRows; i++) copy(&arr[ind[i]*numCols], &temp[i*numCols], numCols);
+  for(i=0; i<numRows; i++) copy(&arr[ind[i]*numCols], &temp[i*numCols], numCols);
   copy(temp, arr, numRows*numCols);
   free(temp);
 }
 void argsort(int* ind, double* A, int n){
-  for(int i=0; i<n; i++) ind[i] = i;
-  for(int i=0; i<n; i++){
+  int i=0;
+  for(i=0; i<n; i++) ind[i] = i;
+  for(i=0; i<n; i++){
     int x = ind[i];
     int j = i-1;
     while (j >= 0 && A[ind[j]] > A[x]){
@@ -40,7 +42,7 @@ void _minimize(double (*func)(double* x, void* args), double* x0, int N, void* a
   nonzdelt=0.05,
   zdelt=0.00025;
 
-  int maxiter = N*200;
+  int maxiter = N*200, i=0, j=0, k=0;
 
   double* sim = zeros(N+1,N);
   double* fsim = zeros(N+1,1);
@@ -48,7 +50,7 @@ void _minimize(double (*func)(double* x, void* args), double* x0, int N, void* a
   fsim[0] = func(x0, args);
 
   double* y = zeros(N,1);
-  for(int k=0; k<N; k++){
+  for(k=0; k<N; k++){
     copy(x0, y, N);
     if (y[k] != 0){
       y[k] = (1+nonzdelt)*y[k];
@@ -68,28 +70,28 @@ void _minimize(double (*func)(double* x, void* args), double* x0, int N, void* a
 
   while (iterations < maxiter){
     double s_max = 0; double f_max = 0;
-    for (int i=1; i<N+1; i++)
+    for (i=1; i<N+1; i++)
       if (fabs(fsim[i] - fsim[0]) > f_max) f_max = fabs(fsim[i]-fsim[0]);
-    for (int i=1; i<N+1; i++)
-      for (int j=0; j<N; j++)
+    for (i=1; i<N+1; i++)
+      for (j=0; j<N; j++)
         if (fabs(sim(i,j) - sim(0,j)) > s_max) s_max = fabs(sim(i,j)-sim(0,j));
     if (s_max <= xatol && f_max <= fatol) break;
 
     double* xbar = zeros(N,1);
-    for (int i=0; i<N; i++){
-      for (int j=0; j<N; j++)
+    for (i=0; i<N; i++){
+      for (j=0; j<N; j++)
         xbar[j] += sim(i,j)/N;
     }
 
     double* xr = zeros(N,1);
-    for (int i=0; i<N; i++) xr[i] = (1+rho)*xbar[i] - rho*sim(N,i);
+    for (i=0; i<N; i++) xr[i] = (1+rho)*xbar[i] - rho*sim(N,i);
     double fxr = func(xr, args);
 
     int doshrink = 0;
 
     if (fxr < fsim[0]){
       double* xe = zeros(N,1);
-      for (int i=0; i<N; i++) xe[i] = (1+rho*chi)*xbar[i] - (rho*chi)*sim(N,i);
+      for (i=0; i<N; i++) xe[i] = (1+rho*chi)*xbar[i] - (rho*chi)*sim(N,i);
       double fxe = func(xe, args);
 
       if (fxe < fxr){
@@ -107,7 +109,7 @@ void _minimize(double (*func)(double* x, void* args), double* x0, int N, void* a
       } else {
         if (fxr < fsim[N]){
           double* xc = zeros(N,1);
-          for (int i=0; i<N; i++) xc[i] = (1+psi*rho)*xbar[i] - (psi*rho)*sim(N,i);
+          for (i=0; i<N; i++) xc[i] = (1+psi*rho)*xbar[i] - (psi*rho)*sim(N,i);
           double fxc = func(xc, args);
 
           if (fxc <= fxr){
@@ -119,7 +121,7 @@ void _minimize(double (*func)(double* x, void* args), double* x0, int N, void* a
           free(xc);
         } else {
           double* xcc = zeros(N,1);
-          for (int i=0; i<N; i++) xcc[i] = (1-psi)*xbar[i] + psi*sim(N,i);
+          for (i=0; i<N; i++) xcc[i] = (1-psi)*xbar[i] + psi*sim(N,i);
           double fxcc = func(xcc, args);
 
           if (fxcc < fsim[N]){
@@ -132,8 +134,8 @@ void _minimize(double (*func)(double* x, void* args), double* x0, int N, void* a
         }
 
         if (doshrink) {
-          for (int i=1; i<N+1; i++) {
-            for (int j=0; j<N; j++) sim(i,j) = sim(0,j) + sigma*(sim(i,j) - sim(0,j));
+          for (i=1; i<N+1; i++) {
+            for (j=0; j<N; j++) sim(i,j) = sim(0,j) + sigma*(sim(i,j) - sim(0,j));
             fsim[i] = func(&sim(i,0), args);
           }
         }

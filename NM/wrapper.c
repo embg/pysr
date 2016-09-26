@@ -8,9 +8,9 @@ typedef struct arg_struct {
 
 double func(double* x, void* args){
   //Build a PyList off of x
-  int N = ((arg_struct*)args)->N;
+  int N = ((arg_struct*)args)->N, i=0;
   PyObject* x_list = PyList_New(N);
-  for (int i=0; i<N; i++){ PyList_SetItem(x_list, i, PyFloat_FromDouble(x[i])); }
+  for (i=0; i<N; i++){ PyList_SetItem(x_list, i, PyFloat_FromDouble(x[i])); }
 
   //Pass x_list into the python objective function
   PyObject* arglist = Py_BuildValue("(O)", x_list);
@@ -27,9 +27,9 @@ static PyObject* minimize(PyObject* self, PyObject* py_args){
   if (!PyArg_ParseTuple(py_args, "OO", &py_func, &x0_list)) return NULL;
 
   //Copy doubles out of x0_list to a regular double* array
-  int N = PyList_Size(x0_list);
+  int N = PyList_Size(x0_list), i=0;
   double* x0 = (double*)malloc(N*sizeof(double));
-  for (int i=0; i<N; i++) x0[i] = PyFloat_AsDouble(PyList_GetItem(x0_list, i));
+  for (i=0; i<N; i++) x0[i] = PyFloat_AsDouble(PyList_GetItem(x0_list, i));
 
   //Set up an arg_struct and minimize py_func(x0)
   arg_struct c_args = { py_func, N };
@@ -37,7 +37,7 @@ static PyObject* minimize(PyObject* self, PyObject* py_args){
 
   //Now build a list off of x0 and return it
   PyObject* result_list = PyList_New(N);
-  for (int i=0; i<N; i++){ PyList_SetItem(result_list, i, PyFloat_FromDouble(x0[i])); }
+  for (i=0; i<N; i++){ PyList_SetItem(result_list, i, PyFloat_FromDouble(x0[i])); }
   free(x0);
   return result_list;
 }
